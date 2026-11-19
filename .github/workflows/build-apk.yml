@@ -1,0 +1,52 @@
+
+name: Build Civil Labour Booking APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Civil_Labour_Booking_Starter_Project.zip'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Extract project ZIP
+        run: |
+          mkdir -p extracted
+          unzip -q Civil_Labour_Booking_Starter_Project.zip -d extracted
+
+      - name: Find Flutter project
+        run: |
+          PROJECT_DIR=$(find extracted -name pubspec.yaml -print -quit | xargs dirname)
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          cd "$PROJECT_DIR"
+          flutter pub get
+
+      - name: Build APK
+        run: |
+          cd "$PROJECT_DIR"
+          flutter build apk --release
+
+      - name: Copy APK
+        run: |
+          cp "$PROJECT_DIR/build/app/outputs/flutter-apk/app-release.apk" app-release.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Civil-Labour-Booking-APK
+          path: app-release.apk
